@@ -24,19 +24,18 @@ from email.utils import make_msgid
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 # ---------------------------------------------------------------- people
-# Fill in any address left as "" (blank addresses are skipped, nothing breaks).
+# Email addresses. To add/remove someone, edit here and the "to"/"cc" lists below.
 BRYAN = "bryan.f@ergode.com"
 RUPESH = "rupesh@ergodeinc.com"
 ANKUSH = "ankush.l@ergode.com"
-KRISHNA = ""   # TODO: Krishna's email address
-PANKAJ = ""    # TODO: Pankaj's email address
+KRISHNA = "krishna.s@ergode.com"
+PANKAJ = "pankaj.r@virventures.com"
 ROHITASH = "rohitash.s@virventures.com"
 AKASH = "akash.sonar@virventures.com"
 VIJAY = "vijay.sharma@ergode.com"
 
-DASHBOARD_URL = (os.environ.get("DASHBOARD_URL") or "https://warehousedashboardvirventures.netlify.app/").rstrip("/") + "/"
 # Bryan's own website (separate Netlify project). Set the repository variable BRYAN_DASHBOARD_URL.
-BRYAN_URL = (os.environ.get("BRYAN_DASHBOARD_URL") or "https://REPLACE-ME.netlify.app").rstrip("/") + "/"
+BRYAN_URL = (os.environ.get("BRYAN_DASHBOARD_URL") or "https://bryan-warehouse-virventures.netlify.app").rstrip("/") + "/"
 SHEET_ID = "1uqQ2PrTUmTE1Z4bLQEujYE7X4TTvQyntQcsU8ASdv68"
 IST = timezone(timedelta(hours=5, minutes=30))
 OUT_DIR = "shots"
@@ -174,16 +173,15 @@ def build_email(name: str, status: dict):
 
     attachments = []  # (bytes, maintype, subtype, filename)
     # attachments: unaccounted details (Excel) + unshipped orders (CSV)
-    if True:
-        xlsx = download(f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=xlsx", "spreadsheet")
-        if xlsx:
-            attachments.append((xlsx, "application",
-                                "vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                f"Unaccounted-Inventory-Details-{now:%Y-%m-%d}.xlsx"))
-        zoho = download(BRYAN_URL + ".netlify/functions/get-zoho?format=csv", "csv")
-        if zoho:
-            attachments.append((zoho, "text", "csv", f"Unshipped-Orders-VVI_FBM-{now:%Y-%m-%d}.csv"))
-        subject, html, text = body_bryan(cids, now, live, status, [a[3] for a in attachments])
+    xlsx = download(f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=xlsx", "spreadsheet")
+    if xlsx:
+        attachments.append((xlsx, "application",
+                            "vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            f"Unaccounted-Inventory-Details-{now:%Y-%m-%d}.xlsx"))
+    zoho = download(BRYAN_URL + ".netlify/functions/get-zoho?format=csv", "csv")
+    if zoho:
+        attachments.append((zoho, "text", "csv", f"Unshipped-Orders-VVI_FBM-{now:%Y-%m-%d}.csv"))
+    subject, html, text = body_bryan(cids, now, live, status, [a[3] for a in attachments])
 
     to = [e for e in report["to"] if e]
     cc = [e for e in report["cc"] if e]
