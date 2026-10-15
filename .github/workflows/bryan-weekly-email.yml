@@ -1,0 +1,47 @@
+name: Bryan weekly email
+
+on:
+  schedule:
+    # Monday 05:30 UTC = Monday 11:00 AM IST
+    - cron: "30 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      skip_email:
+        description: "Test only: take the screenshots but do NOT send the email"
+        type: boolean
+        default: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install browser
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Capture dashboard and send email
+        env:
+          BRYAN_DASHBOARD_URL: ${{ vars.BRYAN_DASHBOARD_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          SKIP_EMAIL: ${{ inputs.skip_email && '1' || '' }}
+        run: python send_bryan_email.py
+
+      - name: Keep the screenshots with the run (7 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-screenshots
+          path: shots/
+          retention-days: 7
